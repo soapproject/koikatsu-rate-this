@@ -41,7 +41,7 @@ namespace KK_Rate_This
         // Draw a checkbox in the right-sidebar
         private void OnMakerSceneLoaded(object sender, RegisterSubCategoriesEvent args)
         {
-            var toggle = args.AddSidebarControl(new SidebarToggle("Rate It", false, this));
+            var toggle = args.AddSidebarControl(new SidebarToggle("Rate This", false, this));
             toggle.ValueChanged.Subscribe(value =>
             {
                 togglePanelGUI(value);
