@@ -1,6 +1,6 @@
 # koikatsu-rate-this
 
-This project is a plugin for Koikatsu that allows users to rate character cards directly from the character creation screen (Maker). The plugin adds a "Rate It" checkbox in the right-sidebar. Once toggled, a panel will appear with configurable rating buttons. Based on the selected rating, the character card will be automatically moved to a designated folder under \Koikatsu\UserData\chara\female\{RatingType}.
+This project is a plugin for Koikatsu that allows users to rate character cards directly from the character creation screen (Maker). The plugin adds a "Rate This" checkbox in the right-sidebar. Once toggled, a panel will appear with configurable rating buttons. Based on the selected rating, the character card will be automatically moved to a designated folder under \Koikatsu\UserData\chara\female\{RatingType}.
 
 Key features:
 
