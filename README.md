@@ -12,7 +12,7 @@ Buffer System: Ratings can be assigned to multiple characters and batch-processe
 
 This tool is ideal for users who wish to quickly organize their character cards based on personal preferences or issues found in the cards.
 
-![image](https://github.com/user-attachments/assets/7cfbf957-d787-42fc-bf84-249c5802e488)
+![image](https://github.com/user-attachments/assets/21b3078e-2b40-4298-90e3-1b8f1674820f)
 
 ![image](https://github.com/user-attachments/assets/bf48db3f-3a43-4031-8110-b70a8df1c6a6)
 
