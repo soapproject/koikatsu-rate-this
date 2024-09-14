@@ -3,6 +3,7 @@ using KKAPI.Chara;
 using KKAPI.Maker;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 namespace KK_Rate_This
@@ -97,7 +98,7 @@ namespace KK_Rate_This
             // Copy the ratingTypes list to avoid thread-safety issues
             List<string> localRatingTypes = ratingTypes;
 
-            // draw rating btns
+            // Draw rating btns
             if (localRatingTypes != null)
             {
                 foreach (var rating in localRatingTypes)
@@ -109,7 +110,7 @@ namespace KK_Rate_This
                 }
             }
 
-            // draw buffer
+            // Draw buffer
             GUILayout.Label("Buffer:");
             if (rateBuffer.Count > 0)
             {
@@ -151,13 +152,24 @@ namespace KK_Rate_This
             {
                 try
                 {
-                    string fileName = System.IO.Path.GetFileName(move.SourcePath);
+                    string fileName = System.IO.Path.GetFileNameWithoutExtension(move.SourcePath);
+                    string extension = Path.GetExtension(move.SourcePath);
                     string destFolder = System.IO.Path.Combine(BepInEx.Paths.GameRootPath, $"UserData/chara/female/{move.Rating}");
-                    string destPath = System.IO.Path.Combine(destFolder, fileName);
+                    string destPath = System.IO.Path.Combine(destFolder, fileName + extension);
 
+                    // Make sure forder exist
                     System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(destPath));
+
+                    // Check for duplicates and append index if necessary
+                    int index = 1;
+                    while (File.Exists(destPath))
+                    {
+                        destPath = Path.Combine(destFolder, $"{fileName}({index}){extension}");
+                        index++;
+                    }
+
                     System.IO.File.Move(move.SourcePath, destPath);
-                    Logger.LogInfo($"Moved '{fileName}' to '{destPath}'.");
+                    Logger.LogInfo($"Moved '{fileName + extension}' to '{destPath}'.");
                 }
                 catch (System.Exception ex)
                 {
