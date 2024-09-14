@@ -7,8 +7,8 @@
     <ProjectGuid>{DC3F6273-2772-4350-AB8C-1A89613F9142}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>koikatsu_rate_this</RootNamespace>
-    <AssemblyName>koikatsu-rate-this</AssemblyName>
+    <RootNamespace>KK_Rate_This</RootNamespace>
+    <AssemblyName>KK_Rate_This</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>

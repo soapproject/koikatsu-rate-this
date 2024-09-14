@@ -5,9 +5,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace RatingPlugin
+namespace KK_Rate_This
 {
-
     public class RateBuffer
     {
         public string SourcePath;
@@ -26,7 +25,7 @@ namespace RatingPlugin
     {
         public static PanelGUI Instance;
         private Rect windowRect = new Rect(100, 100, 300, 600);
-        private ManualLogSource Logger = BepInEx.Logging.Logger.CreateLogSource("RatingPlugin");
+        private ManualLogSource Logger = BepInEx.Logging.Logger.CreateLogSource("KK_Rate_This");
         private List<string> ratingTypes;
         private volatile bool configChanged = false;
         private List<RateBuffer> rateBuffer = new List<RateBuffer>();

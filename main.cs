@@ -14,13 +14,13 @@ using KKAPI.Maker.UI.Sidebar;
 using UniRx;
 using UnityEngine;
 
-namespace RatingPlugin
+namespace KK_Rate_This
 {
-    [BepInPlugin(GUID, "Rating Plugin", Version)]
+    [BepInPlugin(GUID, "KK Rate This", Version)]
     [BepInDependency(KKAPI.KoikatuAPI.GUID, KKAPI.KoikatuAPI.VersionConst)]
     public class RatingPlugin : BaseUnityPlugin
     {
-        public const string GUID = "com.soapproject.koikatsu.ratingplugin";
+        public const string GUID = "com.soapproject.koikatsu.kk_rate_this";
         public const string Version = "1.0.0";
         public static ConfigEntry<string> RatingTypesConfig;
 
