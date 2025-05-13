@@ -25,20 +25,32 @@ namespace KK_Rate_This
     public class PanelGUI : MonoBehaviour
     {
         public static PanelGUI Instance;
+
         private Rect windowRect = new Rect(100, 100, 300, 600);
+        private readonly Vector2 MinSize = new Vector2(200f, 300f);
+        private readonly float ResizeHandleSize = 15f;
+
         private ManualLogSource Logger = BepInEx.Logging.Logger.CreateLogSource("KK_Rate_This");
+
         private List<string> ratingTypes;
         private volatile bool configChanged = false;
         private List<RateBuffer> rateBuffer = new List<RateBuffer>();
         private Vector2 scrollPosition;
 
+        private bool isResizing = false;
+        private Vector2 resizeStartPos;
+        private Rect originalWindowRect;
+
         private void Awake()
         {
             enabled = false;
             LoadConfig();
-
-            // Register configuration change event
             RatingPlugin.RatingTypesConfig.SettingChanged += OnConfigChanged;
+        }
+
+        private void OnDestroy()
+        {
+            RatingPlugin.RatingTypesConfig.SettingChanged -= OnConfigChanged;
         }
 
         private void OnConfigChanged(object sender, EventArgs e)
@@ -61,6 +73,7 @@ namespace KK_Rate_This
                 return;
 
             windowRect = GUI.Window(0, windowRect, DrawPanel, "Rate Character Card");
+            HandleResize();
         }
 
         public static void Show()
@@ -80,11 +93,8 @@ namespace KK_Rate_This
             var ratingTypesConfig = RatingPlugin.RatingTypesConfig.Value;
             var newRatingTypes = new List<string>(ratingTypesConfig.Split(','));
 
-            // Remove leading and trailing spaces from each type
             for (int i = 0; i < newRatingTypes.Count; i++)
-            {
                 newRatingTypes[i] = newRatingTypes[i].Trim();
-            }
 
             ratingTypes = newRatingTypes;
         }
@@ -95,22 +105,17 @@ namespace KK_Rate_This
 
             GUILayout.Label("Select a rating:");
 
-            // Copy the ratingTypes list to avoid thread-safety issues
-            List<string> localRatingTypes = ratingTypes;
+            var localRatingTypes = ratingTypes;
 
-            // Draw rating btns
             if (localRatingTypes != null)
             {
                 foreach (var rating in localRatingTypes)
                 {
                     if (GUILayout.Button(rating))
-                    {
                         RateCharacter(rating);
-                    }
                 }
             }
 
-            // Draw buffer
             GUILayout.Label("Buffer:");
             if (rateBuffer.Count > 0)
             {
@@ -132,18 +137,62 @@ namespace KK_Rate_This
                 }
                 GUILayout.EndScrollView();
 
-                // Use empty space
                 GUILayout.FlexibleSpace();
 
                 if (GUILayout.Button("Move"))
-                {
                     MoveBufferedFiles();
-                }
             }
 
             GUILayout.EndVertical();
-            GUI.DragWindow();
 
+            // 避開右下角的 Resize 區域
+            GUI.DragWindow(new Rect(0, 0, windowRect.width - ResizeHandleSize, 20));
+        }
+
+        private void HandleResize()
+        {
+            int controlID = GUIUtility.GetControlID(FocusType.Passive);
+
+            // 計算右下角 handle 的區域
+            Rect handleRect = new Rect(
+                windowRect.xMax - ResizeHandleSize,
+                windowRect.yMax - ResizeHandleSize,
+                ResizeHandleSize,
+                ResizeHandleSize
+            );
+
+            // 畫出亮灰色的 Resize Handle
+            var prevColor = GUI.color;
+            GUI.color = new Color(0.9f, 0.9f, 0.9f);
+            GUI.DrawTexture(handleRect, Texture2D.whiteTexture);
+            GUI.color = prevColor;
+
+            var e = Event.current;
+            if (e.button != 0) return;
+
+            if (e.type == EventType.MouseDown && handleRect.Contains(e.mousePosition))
+            {
+                isResizing = true;
+                GUIUtility.hotControl = controlID;
+                e.Use();   // 吃掉事件，避免被其他 GUI 元件消化
+                return;
+            }
+
+            if (GUIUtility.hotControl != controlID) return;
+
+            if (e.type == EventType.MouseDrag)
+            {
+                windowRect.size = Vector2.Max(windowRect.size + e.delta, MinSize);
+                e.Use();
+                return;
+            }
+
+            if (e.type == EventType.MouseUp)
+            {
+                isResizing = false;
+                GUIUtility.hotControl = 0;
+                e.Use();
+            }
         }
 
         private void MoveBufferedFiles()
@@ -152,15 +201,13 @@ namespace KK_Rate_This
             {
                 try
                 {
-                    string fileName = System.IO.Path.GetFileNameWithoutExtension(move.SourcePath);
+                    string fileName = Path.GetFileNameWithoutExtension(move.SourcePath);
                     string extension = Path.GetExtension(move.SourcePath);
-                    string destFolder = System.IO.Path.Combine(BepInEx.Paths.GameRootPath, $"UserData/chara/female/{move.Rating}");
-                    string destPath = System.IO.Path.Combine(destFolder, fileName + extension);
+                    string destFolder = Path.Combine(BepInEx.Paths.GameRootPath, $"UserData/chara/female/{move.Rating}");
+                    string destPath = Path.Combine(destFolder, fileName + extension);
 
-                    // Make sure forder exist
-                    System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(destPath));
+                    Directory.CreateDirectory(Path.GetDirectoryName(destPath));
 
-                    // Check for duplicates and append index if necessary
                     int index = 1;
                     while (File.Exists(destPath))
                     {
@@ -168,14 +215,15 @@ namespace KK_Rate_This
                         index++;
                     }
 
-                    System.IO.File.Move(move.SourcePath, destPath);
+                    File.Move(move.SourcePath, destPath);
                     Logger.LogInfo($"Moved '{fileName + extension}' to '{destPath}'.");
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
                     Logger.LogError($"Failed to move '{move.SourcePath}': {ex.Message}");
                 }
             }
+
             Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.ok_l);
             rateBuffer.Clear();
             scrollPosition = Vector2.zero;
@@ -197,25 +245,19 @@ namespace KK_Rate_This
                 return;
             }
 
-            // Upsert rating to buffer
             Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.sel);
-            var existingEntry = rateBuffer.Find(instance => instance.SourcePath == sourcePath);
+            var existingEntry = rateBuffer.Find(x => x.SourcePath == sourcePath);
             if (existingEntry != null)
             {
                 existingEntry.Rating = rating;
-                Logger.LogInfo($"Updated rating of '{System.IO.Path.GetFileName(sourcePath)}' to '{rating}' in buffer.");
+                Logger.LogInfo($"Updated rating of '{Path.GetFileName(sourcePath)}' to '{rating}' in buffer.");
             }
             else
             {
                 string characterName = charFile.parameter.fullname;
                 rateBuffer.Add(new RateBuffer(sourcePath, rating, characterName));
-                Logger.LogInfo($"Added '{System.IO.Path.GetFileName(sourcePath)}' to buffer (Rating: {rating}).");
+                Logger.LogInfo($"Added '{Path.GetFileName(sourcePath)}' to buffer (Rating: {rating}).");
             }
-        }
-
-        private void OnDestroy()
-        {
-            RatingPlugin.RatingTypesConfig.SettingChanged -= OnConfigChanged;
         }
     }
 }
